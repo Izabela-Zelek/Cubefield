@@ -490,10 +490,7 @@ void Game::render()
 	// Set the X, Y and Z offset (this allows for multiple cubes via different shaders)
 	// Experiment with these values to change screen positions
 
-	glUniform1f(x_offsetID, game_object[0]->getPosition().x);
-	glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-	glUniform1f(z_offsetID, game_object[0]->getPosition().z);
-
+	
 	/*glUniform1f(x_offsetID, 0.00f);
 	glUniform1f(y_offsetID, 0.00f);
 	glUniform1f(z_offsetID, 0.00f);*/
@@ -508,6 +505,18 @@ void Game::render()
 	glEnableVertexAttribArray(positionID);
 	glEnableVertexAttribArray(colorID);
 	glEnableVertexAttribArray(uvID);
+
+
+	glUniform1f(x_offsetID, game_object[0]->getPosition().x);
+	glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+	glUniform1f(z_offsetID, game_object[0]->getPosition().z);
+
+	// Draw Element Arrays
+	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+	glUniform1f(x_offsetID, game_object[1]->getPosition().x);
+	glUniform1f(y_offsetID, game_object[1]->getPosition().y);
+	glUniform1f(z_offsetID, game_object[1]->getPosition().z);
 
 	// Draw Element Arrays
 	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
