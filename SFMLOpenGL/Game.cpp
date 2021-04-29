@@ -1,6 +1,7 @@
 #include <Game.h>
 #include <Cube.h>
 #include <Easing.h>
+#include <time.h>
 
 // Helper to convert Number to String for HUD
 template <typename T>
@@ -28,7 +29,6 @@ GLint	positionID,	// Position ID
 		z_offsetID;	// Z offset ID
 
 GLenum	error;		// OpenGL Error Code
-
 
 //Please see .//Assets//Textures// for more textures
 const string filename = ".//Assets//Textures//grid_wip.tga";
@@ -58,11 +58,18 @@ Game::Game(sf::ContextSettings settings) :
 	sf::Style::Default, 
 	settings)
 {
+	srand(std::time(0));
 	game_object[0] = new GameObject();
 	game_object[0]->setPosition(vec3(0.5f, 0.5f, -10.0f));
 
-	game_object[1] = new GameObject();
-	game_object[1]->setPosition(vec3(0.8f, 0.8f, -6.0f));
+
+	for (int i = 0; i < MAX_OBSTACLES; i++)
+	{
+		offsetPosX[i] = rand() % 20 - 10;
+		offsetPosZ[i] = rand() % 9;
+	}
+	//game_object[1] = new GameObject();
+	//game_object[1]->setPosition(vec3(0.8f, 0.8f, -6.0f));
 }
 
 Game::~Game()
@@ -102,7 +109,7 @@ void Game::run()
 					animate = true;
 					if (rotation < 0)
 						rotation *= -1; // Set Positive
-					animation = glm::vec3(0, 1, 0); //Rotate Y
+					animation = glm::vec3(0, -1, 0); //Rotate Y
 				}
 			}
 
@@ -506,20 +513,49 @@ void Game::render()
 	glEnableVertexAttribArray(colorID);
 	glEnableVertexAttribArray(uvID);
 
+	for (int i = 0; i < MAX_OBSTACLES; i++)
+	{
+		glUniform1f(x_offsetID, game_object[0]->getPosition().x + offsetPosX[i]);
+		glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+		glUniform1f(z_offsetID, game_object[0]->getPosition().z + offsetPosZ[i]);
 
-	glUniform1f(x_offsetID, game_object[0]->getPosition().x);
-	glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-	glUniform1f(z_offsetID, game_object[0]->getPosition().z);
+		// Draw Element Arrays
+		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+	}
+
+	
+
+	//glUniform1f(x_offsetID, game_object[0]->getPosition().x + 3);
+	//glUniform1f(y_offsetID, game_object[0]->getPosition().y );
+	//glUniform1f(z_offsetID, game_object[0]->getPosition().z);
+
+	//// Draw Element Arrays
+	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 9);
+	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+	//glUniform1f(z_offsetID, game_object[0]->getPosition().z);
+
+	//// Draw Element Arrays
+	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 2);
+	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+	//glUniform1f(z_offsetID, game_object[0]->getPosition().z + 6);
+
+	//// Draw Element Arrays
+	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+
+	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 6);
+	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+	//glUniform1f(z_offsetID, game_object[0]->getPosition().z + 6);
+
+	//// Draw Element Arrays
+	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 
 	// Draw Element Arrays
-	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 
-	glUniform1f(x_offsetID, game_object[1]->getPosition().x);
-	glUniform1f(y_offsetID, game_object[1]->getPosition().y);
-	glUniform1f(z_offsetID, game_object[1]->getPosition().z);
-
-	// Draw Element Arrays
-	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 	window.display();
 
 	// Disable Arrays
