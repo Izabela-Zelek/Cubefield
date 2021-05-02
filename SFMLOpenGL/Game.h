@@ -34,9 +34,12 @@ public:
 	~Game();
 	void run();
 private:
-	static const int MAX_OBSTACLES = 5;
+	static const int MAX_OBSTACLES = 10;
 	float offsetPosX[MAX_OBSTACLES];
 	float offsetPosZ[MAX_OBSTACLES];
+	float moveX;
+	float moveY;
+	bool moving = false;
 	GameObject* game_object[3];
 	RenderWindow window;
 	Clock clock;

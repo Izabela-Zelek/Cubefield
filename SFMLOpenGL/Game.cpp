@@ -60,16 +60,18 @@ Game::Game(sf::ContextSettings settings) :
 {
 	srand(std::time(0));
 	game_object[0] = new GameObject();
-	game_object[0]->setPosition(vec3(0.5f, 0.5f, -10.0f));
+	game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
 
 
 	for (int i = 0; i < MAX_OBSTACLES; i++)
 	{
 		offsetPosX[i] = rand() % 20 - 10;
-		offsetPosZ[i] = rand() % 9;
+		offsetPosZ[i] = rand() % 30;
 	}
-	//game_object[1] = new GameObject();
-	//game_object[1]->setPosition(vec3(0.8f, 0.8f, -6.0f));
+	game_object[1] = new GameObject();
+	game_object[1]->setPosition(vec3(0.0f, 0.5f, 3.5f));
+	moveX = 0;
+	moveY = 0;
 }
 
 Game::~Game()
@@ -103,84 +105,20 @@ void Game::run()
 
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 			{
-				// Set Model Rotation
-				if (!animate)
-				{
-					animate = true;
-					if (rotation < 0)
-						rotation *= -1; // Set Positive
-					animation = glm::vec3(0, -1, 0); //Rotate Y
-				}
+				moveX -= 0.09;
 			}
 
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 			{
-				// Set Model Rotation
-				if (!animate)
-				{
-					animate = true;
-					if (rotation >= 0)
-						rotation *= -1; // Set Negative
-					animation = glm::vec3(0, 1, 0); //Rotate Y
-				}
-
-				// https://www.sfml-dev.org/documentation/2.0/classsf_1_1Clock.php
-				// https://github.com/acron0/Easings
-				// http://robotacid.com/documents/code/Easing.cs
-				// http://st33d.tumblr.com/post/94243475686/easing-equations-for-unity-c
-				// http://easings.net/
-				// http://upshots.org/actionscript/jsas-understanding-easing
-				// https://www.kirupa.com/html5/animating_with_easing_functions_in_javascript.htm
-				// https://medium.com/motion-in-interaction/animation-principles-in-ui-design-understanding-easing-bea05243fe3#.svh4gczav
-				// http://thednp.github.io/kute.js/easing.html
-				// http://gizma.com/easing/#quad1
-				// https://github.com/warrenm/AHEasing
-
-				// VR
-				// https://www.sfml-dev.org/documentation/2.4.2/classsf_1_1Sensor.php
-				// http://en.sfml-dev.org/forums/index.php?topic=9412.msg65594
-				// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android-on-Windows
-				// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android
-				// https://www.youtube.com/watch?v=n_JSi6ihDFs
-				// http://en.sfml-dev.org/forums/index.php?topic=8010.0
-				// 
-
-				/*
-				// Set Model Rotation
-				// t = time, b = startvalue, c = change in value, d = duration:
-
-				time = clock.getElapsedTime();
-				std::cout << time.asSeconds() << std::endl;
-				float original = 0.001f;
-				float destination = 0.05f;
-
-				float factor, temp;
-
-				for (int t = 0; t < 5.0f; t++)
-				{
-				factor = gpp::Easing::easeIn(t, original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				}
-
-
-				factor = gpp::Easing::easeIn(time.asMilliseconds(), original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				temp = original + ((destination - original) * factor);
-				cout << "Temp : " << factor << endl;
-				model = rotate(model, temp, glm::vec3(0, 1, 0)); // Rotate
-				*/
+				moveX += 0.09;
 			}
 
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 			{
-				// Set Model Rotation
-				model = rotate(model, -0.01f, glm::vec3(1, 0, 0)); // Rotate
-			}
-
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-			{
-				// Set Model Rotation
-				model = rotate(model, 0.01f, glm::vec3(1, 0, 0)); // Rotate
+				if (!moving && moveY <= 0)
+				{
+					moving = true;
+				}
 			}
 
 			if (animate)
@@ -409,6 +347,27 @@ void Game::update()
 	DEBUG_MSG(model[0].x);
 	DEBUG_MSG(model[0].y);
 	DEBUG_MSG(model[0].z);
+	if (moving)
+	{
+		if (moveY < 5)
+		{
+			moveY += 0.03;
+		}
+		else
+		{
+			moving = false;
+		}
+	}
+	else
+	{
+		if (moveY > 0)
+		{
+			moveY -= 0.007;
+		}
+	}
+
+
+
 }
 
 void Game::render()
@@ -513,15 +472,30 @@ void Game::render()
 	glEnableVertexAttribArray(colorID);
 	glEnableVertexAttribArray(uvID);
 
+	glUniform1f(x_offsetID, game_object[1]->getPosition().x + moveX);
+	glUniform1f(y_offsetID, game_object[1]->getPosition().y + moveY);
+	glUniform1f(z_offsetID, game_object[1]->getPosition().z);
+
+	// Draw Element Arrays
+	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
 	for (int i = 0; i < MAX_OBSTACLES; i++)
 	{
 		glUniform1f(x_offsetID, game_object[0]->getPosition().x + offsetPosX[i]);
 		glUniform1f(y_offsetID, game_object[0]->getPosition().y);
 		glUniform1f(z_offsetID, game_object[0]->getPosition().z + offsetPosZ[i]);
-
+		offsetPosZ[i] += 0.01;
+		std::cout << offsetPosZ[0] << std::endl;
+		if (offsetPosZ[i] >= 37)
+		{
+			game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
+			offsetPosX[i] = rand() % 20 - 10;
+			offsetPosZ[i] = 0;
+		}
 		// Draw Element Arrays
 		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 	}
+
 
 	
 
