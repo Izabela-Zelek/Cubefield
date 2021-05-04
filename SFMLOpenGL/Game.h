@@ -33,6 +33,7 @@ public:
 	Game(sf::ContextSettings settings);
 	~Game();
 	void run();
+	void checkCollision();
 private:
 	static const int MAX_OBSTACLES = 10;
 	float offsetPosX[MAX_OBSTACLES];

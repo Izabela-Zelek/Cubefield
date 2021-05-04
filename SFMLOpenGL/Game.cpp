@@ -60,7 +60,7 @@ Game::Game(sf::ContextSettings settings) :
 {
 	srand(std::time(0));
 	game_object[0] = new GameObject();
-	game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
+	game_object[0]->setPosition(vec3(0.0f, 0.5f, -30.0f));
 
 
 	for (int i = 0; i < MAX_OBSTACLES; i++)
@@ -484,8 +484,9 @@ void Game::render()
 		glUniform1f(x_offsetID, game_object[0]->getPosition().x + offsetPosX[i]);
 		glUniform1f(y_offsetID, game_object[0]->getPosition().y);
 		glUniform1f(z_offsetID, game_object[0]->getPosition().z + offsetPosZ[i]);
+
+		checkCollision();
 		offsetPosZ[i] += 0.01;
-		std::cout << offsetPosZ[0] << std::endl;
 		if (offsetPosZ[i] >= 37)
 		{
 			game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
@@ -495,7 +496,6 @@ void Game::render()
 		// Draw Element Arrays
 		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 	}
-
 
 	
 
@@ -566,3 +566,24 @@ void Game::unload()
 	stbi_image_free(img_data);		// Free image stbi_image_free(..)
 }
 
+void Game::checkCollision()
+{
+	for (int i = 0; i < MAX_OBSTACLES; i++)
+	{
+		if (game_object[0]->getPosition().x + offsetPosX[i] - 2 < game_object[1]->getPosition().x + moveX && game_object[0]->getPosition().x + offsetPosX[i] + 2 > game_object[1]->getPosition().x + moveX)
+		{
+			if (game_object[0]->getPosition().z + offsetPosZ[i] - 2 < game_object[1]->getPosition().z && game_object[0]->getPosition().z + offsetPosZ[i] + 2 > game_object[1]->getPosition().z)
+			{
+				if (game_object[0]->getPosition().y - 2 < game_object[1]->getPosition().y + moveY && game_object[0]->getPosition().y + 2 > game_object[1]->getPosition().y + moveY)
+				{
+					std::cout << "COLLISION DETECTED" << std::endl;
+				}
+			//m_lives--;
+			//if (m_lives != 0)
+			//{
+			//	m_playerCube->resetPosition(); // Restart maybe
+			//}
+			}
+		}
+	}
+}
