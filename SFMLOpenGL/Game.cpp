@@ -31,7 +31,7 @@ GLint	positionID,	// Position ID
 GLenum	error;		// OpenGL Error Code
 
 //Please see .//Assets//Textures// for more textures
-const string filename = ".//Assets//Textures//grid_wip.tga";
+const string filename = ".//Assets//Textures//obstacle.tga";
 
 int width;						// Width of texture
 int height;						// Height of texture
@@ -66,7 +66,7 @@ Game::Game(sf::ContextSettings settings) :
 	for (int i = 0; i < MAX_OBSTACLES; i++)
 	{
 		offsetPosX[i] = rand() % 20 - 10;
-		offsetPosZ[i] = rand() % 30;
+		offsetPosZ[i] = rand() % 30 - 15;
 	}
 	game_object[1] = new GameObject();
 	game_object[1]->setPosition(vec3(0.0f, 0.5f, 3.5f));
@@ -105,15 +105,21 @@ void Game::run()
 
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 			{
-				moveX -= 0.09;
+				if (moveX > -3.4)
+				{
+					moveX -= 0.2;
+				}
 			}
 
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 			{
-				moveX += 0.09;
+				if (moveX < 3.4)
+				{
+					moveX += 0.2;
+				}
 			}
 
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 			{
 				if (!moving && moveY <= 0)
 				{
@@ -229,7 +235,7 @@ void Game::initialize()
 		"out vec4 fColor;"
 		""
 		"void main() {"
-		"	fColor = color - texture2D(f_texture, uv);"
+		"	fColor = texture2D(f_texture, uv);"
 		""
 		"}"; //Fragment Shader Src
 
@@ -383,20 +389,14 @@ void Game::render()
 	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
 	window.pushGLStates();
 
-	// Find mouse position using sf::Mouse
-	int x = Mouse::getPosition(window).x;
-	int y = Mouse::getPosition(window).y;
-
-	string hud = "Heads Up Display ["
-		+ string(toString(x))
-		+ "]["
-		+ string(toString(y))
-		+ "]";
+	string hud = "///////////////////////////";
 
 	Text text(hud, font);
 
 	text.setFillColor(sf::Color(255, 255, 255, 170));
-	text.setPosition(50.f, 50.f);
+	text.setOrigin(text.getGlobalBounds().width / 2, text.getGlobalBounds().height / 2);
+	text.setScale(1.7, 1.7);
+	text.setPosition(400.f, 200.f);
 
 	window.draw(text);
 
@@ -416,9 +416,6 @@ void Game::render()
 	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glGetAttribLocation.xml
 	positionID = glGetAttribLocation(progID, "sv_position");
 	if (positionID < 0) { DEBUG_MSG("positionID not found"); }
-
-	colorID = glGetAttribLocation(progID, "sv_color");
-	if (colorID < 0) { DEBUG_MSG("colorID not found"); }
 
 	uvID = glGetAttribLocation(progID, "sv_uv");
 	if (uvID < 0) { DEBUG_MSG("uvID not found"); }
@@ -453,14 +450,6 @@ void Game::render()
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(textureID, 0); // 0 .... 31
 
-	// Set the X, Y and Z offset (this allows for multiple cubes via different shaders)
-	// Experiment with these values to change screen positions
-
-	
-	/*glUniform1f(x_offsetID, 0.00f);
-	glUniform1f(y_offsetID, 0.00f);
-	glUniform1f(z_offsetID, 0.00f);*/
-
 	// Set pointers for each parameter (with appropriate starting positions)
 	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
 	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -472,10 +461,13 @@ void Game::render()
 	glEnableVertexAttribArray(colorID);
 	glEnableVertexAttribArray(uvID);
 
-	glUniform1f(x_offsetID, game_object[1]->getPosition().x + moveX);
-	glUniform1f(y_offsetID, game_object[1]->getPosition().y + moveY);
-	glUniform1f(z_offsetID, game_object[1]->getPosition().z);
-
+	if (isAlive)
+	{
+		glUniform1f(x_offsetID, game_object[1]->getPosition().x + moveX);
+		glUniform1f(y_offsetID, game_object[1]->getPosition().y + moveY);
+		glUniform1f(z_offsetID, game_object[1]->getPosition().z);
+	}
+	
 	// Draw Element Arrays
 	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 
@@ -492,44 +484,16 @@ void Game::render()
 			game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
 			offsetPosX[i] = rand() % 20 - 10;
 			offsetPosZ[i] = 0;
+			gameLength++;
 		}
 		// Draw Element Arrays
 		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 	}
 
-	
-
-	//glUniform1f(x_offsetID, game_object[0]->getPosition().x + 3);
-	//glUniform1f(y_offsetID, game_object[0]->getPosition().y );
-	//glUniform1f(z_offsetID, game_object[0]->getPosition().z);
-
-	//// Draw Element Arrays
-	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 9);
-	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-	//glUniform1f(z_offsetID, game_object[0]->getPosition().z);
-
-	//// Draw Element Arrays
-	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 2);
-	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-	//glUniform1f(z_offsetID, game_object[0]->getPosition().z + 6);
-
-	//// Draw Element Arrays
-	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-
-	//glUniform1f(x_offsetID, game_object[0]->getPosition().x - 6);
-	//glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-	//glUniform1f(z_offsetID, game_object[0]->getPosition().z + 6);
-
-	//// Draw Element Arrays
-	//glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-	// Draw Element Arrays
-
+	if (gameLength >= MAX_GAMELENGTH)
+	{
+		isAlive = false;
+	}
 	window.display();
 
 	// Disable Arrays
@@ -577,6 +541,14 @@ void Game::checkCollision()
 				if (game_object[0]->getPosition().y - 2 < game_object[1]->getPosition().y + moveY && game_object[0]->getPosition().y + 2 > game_object[1]->getPosition().y + moveY)
 				{
 					std::cout << "COLLISION DETECTED" << std::endl;
+					for (int i = 0; i < MAX_OBSTACLES; i++)
+					{
+						offsetPosX[i] = rand() % 20 - 10;
+						offsetPosZ[i] = rand() % 30 - 15;
+					}
+					moveX = 0;
+					moveY = 0;
+					gameLength = 0;
 				}
 			//m_lives--;
 			//if (m_lives != 0)

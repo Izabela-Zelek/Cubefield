@@ -40,8 +40,11 @@ private:
 	float offsetPosZ[MAX_OBSTACLES];
 	float moveX;
 	float moveY;
+	bool isAlive = true;
 	bool moving = false;
-	GameObject* game_object[3];
+	int gameLength = 0;
+	static const int MAX_GAMELENGTH = 50;
+	GameObject* game_object[2];
 	RenderWindow window;
 	Clock clock;
 	Time time;
