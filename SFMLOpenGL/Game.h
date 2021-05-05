@@ -14,7 +14,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
-
+#include "MainMenu.h"
 #include <Debug.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,8 +54,10 @@ private:
 	int gameLength = 0;
 	int score = 0;
 	bool extraScore = false;
-	static const int MAX_GAMELENGTH = 50;
-	GameState m_currentState = GameState::Menu;
+	static const int MAX_GAMELENGTH = 250;
+	string hud;
+	Text text;
+	GameState currentState = GameState::Menu;
 	GameObject* game_object[3];
 	RenderWindow window;
 	Clock clock;
@@ -64,6 +66,8 @@ private:
 	vec3 animation = vec3(0.0f);
 	float rotation = 0.0f;
 	bool isRunning = false;
+	MainMenu menu;
+
 	void initialize();
 	void update();
 	void render();

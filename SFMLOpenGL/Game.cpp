@@ -106,6 +106,14 @@ void Game::run()
 			{
 				isRunning = false;
 			}
+			if (menu.processInput(window, event) == 1)
+			{
+				currentState = GameState::Game;
+			}
+			else if (menu.processInput(window, event) == 2)
+			{
+				window.close();
+			}
 
 			if (animate)
 			{
@@ -318,66 +326,85 @@ void Game::initialize()
 
 	// Load Font
 	font.loadFromFile(".//Assets//Fonts//BBrick.ttf");
+
+	text.setFont(font);
+	text.setFillColor(sf::Color(255, 255, 255, 170));
+	text.setPosition(30.f, 30.f);
+
+	menu.initialise(font);
 }
 
 void Game::update()
 {
+	switch (currentState)
+	{
+	case GameState::Menu:
+		menu.update(window);
+		break;
+	case GameState::Game:
 #if (DEBUG >= 2)
-	DEBUG_MSG("Updating...");
+		DEBUG_MSG("Updating...");
 #endif
-	// Update Model View Projection
-	// For mutiple objects (cubes) create multiple models
-	// To alter Camera modify view & projection
-	mvp = projection * view * model;
+		// Update Model View Projection
+		// For mutiple objects (cubes) create multiple models
+		// To alter Camera modify view & projection
+		mvp = projection * view * model;
 
-	DEBUG_MSG(model[0].x);
-	DEBUG_MSG(model[0].y);
-	DEBUG_MSG(model[0].z);
+		DEBUG_MSG(model[0].x);
+		DEBUG_MSG(model[0].y);
+		DEBUG_MSG(model[0].z);
 
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-	{
-		if (moveX > -6)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			moveX -= 0.009;
+			if (moveX > -6)
+			{
+				moveX -= 0.009;
+			}
 		}
-	}
 
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-	{
-		if (moveX < 6)
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			moveX += 0.009;
+			if (moveX < 6)
+			{
+				moveX += 0.009;
+			}
 		}
-	}
 
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-	{
-		if (!moving && moveY <= 0)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 		{
-			extraScore = true;
-			moving = true;
+			if (!moving && moveY <= 0)
+			{
+				extraScore = true;
+				moving = true;
+			}
 		}
-	}
 
 
-	if (moving)
-	{
-		if (moveY < 5)
+		if (moving)
 		{
-			moveY += 0.02;
+			if (moveY < 5)
+			{
+				moveY += 0.02;
+			}
+			else
+			{
+				moving = false;
+			}
 		}
 		else
 		{
-			moving = false;
+			if (moveY > 0)
+			{
+				moveY -= 0.007;
+			}
 		}
-	}
-	else
-	{
-		if (moveY > 0)
-		{
-			moveY -= 0.007;
-		}
-	}
+		break;
+	case GameState::EndScreen:
+		break;
+	default:
+		break;
+}
+
 
 
 
@@ -385,154 +412,172 @@ void Game::update()
 
 void Game::render()
 {
-
-#if (DEBUG >= 2)
-	DEBUG_MSG("Render Loop...");
-#endif
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// Save current OpenGL render states
-	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
-	window.pushGLStates();
-	score++;
-	string hud = "Score:" + string(toString(score));
 
-	Text text(hud, font);
-
-	text.setFillColor(sf::Color(255, 255, 255, 170));
-	text.setPosition(30.f, 30.f);
-
-	window.draw(text);
-
-	// Restore OpenGL render states
-	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
-
-	window.popGLStates();
-
-	// Rebind Buffers and then set SubData
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vib);
-
-	// Use Progam on GPU
-	glUseProgram(progID);
-
-	// Find variables within the shader
-	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glGetAttribLocation.xml
-	positionID = glGetAttribLocation(progID, "sv_position");
-	if (positionID < 0) { DEBUG_MSG("positionID not found"); }
-
-	uvID = glGetAttribLocation(progID, "sv_uv");
-	if (uvID < 0) { DEBUG_MSG("uvID not found"); }
-
-	textureID = glGetUniformLocation(progID, "f_texture");
-	if (textureID < 0) { DEBUG_MSG("textureID not found"); }
-
-	mvpID = glGetUniformLocation(progID, "sv_mvp");
-	if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
-
-	x_offsetID = glGetUniformLocation(progID, "sv_x_offset");
-	if (x_offsetID < 0) { DEBUG_MSG("x_offsetID not found"); }
-
-	y_offsetID = glGetUniformLocation(progID, "sv_y_offset");
-	if (y_offsetID < 0) { DEBUG_MSG("y_offsetID not found"); }
-
-	z_offsetID = glGetUniformLocation(progID, "sv_z_offset");
-	if (z_offsetID < 0) { DEBUG_MSG("z_offsetID not found"); };
-
-	// Send transformation to shader mvp uniform [0][0] is start of array
-	glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
-
-	// Set Active Texture .... 32 GL_TEXTURE0 .... GL_TEXTURE31
-	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(textureID, 0); // 0 .... 31
-
-	// Set pointers for each parameter (with appropriate starting positions)
-	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, (VOID*)(3 * VERTICES * sizeof(GLfloat)));
-	glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, (VOID*)(((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat)));
-	
-	// Enable Arrays
-	glEnableVertexAttribArray(positionID);
-	glEnableVertexAttribArray(colorID);
-	glEnableVertexAttribArray(uvID);
-
-	if (!isAlive)
+	switch (currentState)
 	{
-		for (int i = 0; i < MAX_GOALLENGTH; i++)
+	case GameState::Menu:
+		window.pushGLStates();
+		menu.render(window);
+		window.popGLStates();
+		break;
+	case GameState::Game:
+#if (DEBUG >= 2)
+		DEBUG_MSG("Render Loop...");
+#endif
+		// Save current OpenGL render states
+		// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
+		window.pushGLStates();
+		score++;
+		hud = "Score:" + string(toString(score));
+
+		text.setString(hud);
+
+		window.draw(text);
+
+		// Restore OpenGL render states
+		// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
+
+		window.popGLStates();
+
+		// Rebind Buffers and then set SubData
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vib);
+
+		// Use Progam on GPU
+		glUseProgram(progID);
+
+		// Find variables within the shader
+		// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glGetAttribLocation.xml
+		positionID = glGetAttribLocation(progID, "sv_position");
+		if (positionID < 0) { DEBUG_MSG("positionID not found"); }
+
+		uvID = glGetAttribLocation(progID, "sv_uv");
+		if (uvID < 0) { DEBUG_MSG("uvID not found"); }
+
+		textureID = glGetUniformLocation(progID, "f_texture");
+		if (textureID < 0) { DEBUG_MSG("textureID not found"); }
+
+		mvpID = glGetUniformLocation(progID, "sv_mvp");
+		if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
+
+		x_offsetID = glGetUniformLocation(progID, "sv_x_offset");
+		if (x_offsetID < 0) { DEBUG_MSG("x_offsetID not found"); }
+
+		y_offsetID = glGetUniformLocation(progID, "sv_y_offset");
+		if (y_offsetID < 0) { DEBUG_MSG("y_offsetID not found"); }
+
+		z_offsetID = glGetUniformLocation(progID, "sv_z_offset");
+		if (z_offsetID < 0) { DEBUG_MSG("z_offsetID not found"); };
+
+		// Send transformation to shader mvp uniform [0][0] is start of array
+		glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
+
+		// Set Active Texture .... 32 GL_TEXTURE0 .... GL_TEXTURE31
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(textureID, 0); // 0 .... 31
+
+		// Set pointers for each parameter (with appropriate starting positions)
+		// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
+		glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, (VOID*)(3 * VERTICES * sizeof(GLfloat)));
+		glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, (VOID*)(((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat)));
+
+		// Enable Arrays
+		glEnableVertexAttribArray(positionID);
+		glEnableVertexAttribArray(colorID);
+		glEnableVertexAttribArray(uvID);
+
+		if (!isAlive)
 		{
-			glUniform1f(x_offsetID, game_object[2]->getPosition().x + 2.05 * i);
-			glUniform1f(y_offsetID, game_object[2]->getPosition().y);
-			glUniform1f(z_offsetID, game_object[2]->getPosition().z + goalMoving);
+			for (int i = 0; i < MAX_GOALLENGTH; i++)
+			{
+				glUniform1f(x_offsetID, game_object[2]->getPosition().x + 2.05 * i);
+				glUniform1f(y_offsetID, game_object[2]->getPosition().y);
+				glUniform1f(z_offsetID, game_object[2]->getPosition().z + goalMoving);
+				// Draw Element Arrays
+				glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[2]->getVertex());
+				glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), gcolors);
+				glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), puvs);
+				glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+			}
+			goalMoving += 0.01;
+		}
+
+		glUniform1f(x_offsetID, game_object[1]->getPosition().x + moveX);
+		glUniform1f(y_offsetID, game_object[1]->getPosition().y + moveY);
+		glUniform1f(z_offsetID, game_object[1]->getPosition().z);
+		// Draw Element Arrays
+		glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[1]->getVertex());
+		glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), pcolors);
+		glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), puvs);
+		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+
+		for (int i = 0; i < MAX_OBSTACLES; i++)
+		{
+			glUniform1f(x_offsetID, game_object[0]->getPosition().x + offsetPosX[i]);
+			glUniform1f(y_offsetID, game_object[0]->getPosition().y);
+			glUniform1f(z_offsetID, game_object[0]->getPosition().z + offsetPosZ[i]);
+
+			checkCollision();
+			offsetPosZ[i] += 0.01;
+			if (offsetPosZ[i] >= 37)
+			{
+				if (isAlive)
+				{
+					game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
+					offsetPosX[i] = rand() % 20 - 10;
+					offsetPosZ[i] = 0;
+					gameLength++;
+				}
+			}
 			// Draw Element Arrays
-			glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[2]->getVertex());
-			glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), gcolors);
-			glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), puvs);
+			// VBO Data....vertices, colors and UV's appended
+		// Add the Vertices for all your GameOjects, Colors and UVS
+
+			glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[0]->getVertex());
+			//glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
+			glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
+			glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
+
 			glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
 		}
-		goalMoving += 0.01;
-	}
 
-	glUniform1f(x_offsetID, game_object[1]->getPosition().x + moveX);
-	glUniform1f(y_offsetID, game_object[1]->getPosition().y + moveY);
-	glUniform1f(z_offsetID, game_object[1]->getPosition().z);
-	// Draw Element Arrays
-	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[1]->getVertex());
-	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), pcolors);
-	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), puvs);
-	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-
-	for (int i = 0; i < MAX_OBSTACLES; i++)
-	{
-		glUniform1f(x_offsetID, game_object[0]->getPosition().x + offsetPosX[i]);
-		glUniform1f(y_offsetID, game_object[0]->getPosition().y);
-		glUniform1f(z_offsetID, game_object[0]->getPosition().z + offsetPosZ[i]);
-
-		checkCollision();
-		offsetPosZ[i] += 0.01;
-		if (offsetPosZ[i] >= 37)
+		if (gameLength >= MAX_GAMELENGTH)
 		{
-			game_object[0]->setPosition(vec3(0.5f, 0.5f, -30.0f));
-			offsetPosX[i] = rand() % 20 - 10;
-			offsetPosZ[i] = 0;
-			gameLength++;
+			isAlive = false;
 		}
-		// Draw Element Arrays
-		// VBO Data....vertices, colors and UV's appended
-	// Add the Vertices for all your GameOjects, Colors and UVS
 
-		glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), game_object[0]->getVertex());
-		//glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
-		glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
+		// Disable Arrays
+		glDisableVertexAttribArray(positionID);
+		glDisableVertexAttribArray(colorID);
+		glDisableVertexAttribArray(uvID);
 
-		glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-	}
+		// Unbind Buffers with 0 (Resets OpenGL States...important step)
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	if (gameLength >= MAX_GAMELENGTH)
-	{
-		isAlive = false;
+		// Reset the Shader Program to Use
+		glUseProgram(0);
+
+		// Check for OpenGL Error code
+		error = glGetError();
+		if (error != GL_NO_ERROR) {
+			DEBUG_MSG(error);
+		}
+		break;
+	case GameState::EndScreen:
+		window.pushGLStates();
+		text.setPosition(300.f, 250.f);
+		text.setString(hud);
+		window.draw(text);
+		window.popGLStates();
+		break;
+	default:
+		break;
 	}
 	window.display();
-
-	// Disable Arrays
-	glDisableVertexAttribArray(positionID);
-	glDisableVertexAttribArray(colorID);
-	glDisableVertexAttribArray(uvID);
-
-	// Unbind Buffers with 0 (Resets OpenGL States...important step)
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// Reset the Shader Program to Use
-	glUseProgram(0);
-
-	// Check for OpenGL Error code
-	error = glGetError();
-	if (error != GL_NO_ERROR) {
-		DEBUG_MSG(error);
-	}
 }
 
 void Game::unload()
@@ -570,6 +615,8 @@ void Game::checkCollision()
 					moveY = 0;
 					gameLength = 0;
 					score = 0;
+					isAlive = true;
+					goalMoving = 0;
 				}
 				else
 				{
@@ -587,7 +634,7 @@ void Game::checkCollision()
 	{
 		if (game_object[2]->getPosition().z + goalMoving - 1 >= game_object[1]->getPosition().z)
 		{
-			window.close();
+			currentState = GameState::EndScreen;
 		}
 	}
 }
