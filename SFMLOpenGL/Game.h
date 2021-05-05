@@ -26,6 +26,13 @@ using namespace std;
 using namespace sf;
 using namespace glm;
 
+enum class GameState
+{
+	Menu,
+	Game,
+	EndScreen
+};
+
 class Game
 {
 public:
@@ -36,15 +43,20 @@ public:
 	void checkCollision();
 private:
 	static const int MAX_OBSTACLES = 10;
+	static const int MAX_GOALLENGTH = 30;
 	float offsetPosX[MAX_OBSTACLES];
 	float offsetPosZ[MAX_OBSTACLES];
 	float moveX;
 	float moveY;
+	float goalMoving = 0;
 	bool isAlive = true;
 	bool moving = false;
 	int gameLength = 0;
+	int score = 0;
+	bool extraScore = false;
 	static const int MAX_GAMELENGTH = 50;
-	GameObject* game_object[2];
+	GameState m_currentState = GameState::Menu;
+	GameObject* game_object[3];
 	RenderWindow window;
 	Clock clock;
 	Time time;

@@ -16,6 +16,39 @@ GameObject::GameObject()
 	this->position = vec3();
 }
 
+
+void GameObject::setPlayer()
+{
+	// Copy the Cube contents into GameObject
+	memcpy(this->vertex, PLAYER_H::pvertices, sizeof(this->vertex));
+	memcpy(this->color, PLAYER_H::pcolors, sizeof(this->color));
+	memcpy(this->uv, PLAYER_H::puvs, sizeof(this->uv));
+
+	// Copy UV's to all faces
+	for (int i = 1; i < 6; i++)
+		memcpy(&uv[i * 4 * 2], &uv[0], 2 * 4 * sizeof(GLfloat));
+
+	memcpy(this->index, PLAYER_H::pindices, sizeof(this->index));
+
+	this->position = vec3();
+}
+
+void GameObject::setGoal()
+{
+	// Copy the Cube contents into GameObject
+	memcpy(this->vertex, GOAL_H::gvertices, sizeof(this->vertex));
+	memcpy(this->color, GOAL_H::gcolors, sizeof(this->color));
+	memcpy(this->uv, GOAL_H::guvs, sizeof(this->uv));
+
+	// Copy UV's to all faces
+	for (int i = 1; i < 6; i++)
+		memcpy(&uv[i * 4 * 2], &uv[0], 2 * 4 * sizeof(GLfloat));
+
+	memcpy(this->index, GOAL_H::gindices, sizeof(this->index));
+
+	this->position = vec3();
+}
+
 GameObject::~GameObject() 
 {
 }

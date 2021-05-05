@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <Cube.h>
-
+#include "Player.h"
+#include "Goal.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -28,7 +29,9 @@ public:
 	~GameObject();
 
 	vec3 getPosition();
+	void setPlayer();
 	void setPosition(vec3 position);
+	void setGoal();
 
 	// Returns the first element of the array
 	GLfloat* getVertex();
