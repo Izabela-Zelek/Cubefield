@@ -16,10 +16,27 @@ void MainMenu::initialise(sf::Font& t_font)
 {
 	m_font = t_font;
 
+	if (!m_bgTexture.loadFromFile(".//Assets//Textures//geometricbg.png"))
+	{
+		std::cout << "Error with menu bg texture";
+	}
+
+	m_bg.setTexture(m_bgTexture);
+	m_bg.setPosition(0, 0);
+	m_bg.setColor(sf::Color(255, 255, 255, 192));
+
 	if (!m_buttonTexture.loadFromFile(".//Assets//Textures//button.png"))
 	{
 		std::cout << "Error with button texture";
 	}
+
+	if (!m_buttonBuffer.loadFromFile("./Assets/Sound/button.wav"))
+	{
+		std::cout << "Problem with hit sound file" << std::endl;
+	}
+
+	m_button.setBuffer(m_buttonBuffer);
+	m_button.setVolume(37);
 
 
 	for (int index = 0; index < MAX_BUTTON; index++)
@@ -46,6 +63,7 @@ void MainMenu::initialise(sf::Font& t_font)
 //draws the button sprites and text
 void MainMenu::render(sf::RenderWindow& t_window)
 {
+	t_window.draw(m_bg);
 	for (int index = 0; index < MAX_BUTTON; index++)
 	{
 		t_window.draw(m_buttonSprite[index]);
@@ -67,6 +85,11 @@ int MainMenu::processInput(sf::Window& t_window, sf::Event t_event)
 			if (t_event.type == sf::Event::MouseButtonReleased)
 			{
 				changeState = i + 1;
+				if (sf::Sound::Playing != m_button.getStatus())
+				{
+					m_button.play();
+				}
+				
 			}
 		}
 	}

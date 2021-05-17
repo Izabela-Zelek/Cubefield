@@ -13,6 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <SFML/OpenGL.hpp>
 #include "MainMenu.h"
 #include <Debug.h>
@@ -41,6 +42,7 @@ public:
 	~Game();
 	void run();
 	void checkCollision();
+	void initSound();
 private:
 	static const int MAX_OBSTACLES = 10;
 	static const int MAX_GOALLENGTH = 30;
@@ -67,7 +69,17 @@ private:
 	float rotation = 0.0f;
 	bool isRunning = false;
 	MainMenu menu;
-
+	sf::SoundBuffer m_jumpBuffer;
+	sf::Sound m_jump;
+	sf::SoundBuffer m_hitBuffer;
+	sf::Sound m_hit;
+	sf::SoundBuffer m_songBuffer;
+	sf::Sound m_song;
+	sf::SoundBuffer m_winBuffer;
+	sf::Sound m_win;
+	bool m_playSong = true;
+	sf::Texture m_bgTexture;
+	sf::Sprite m_bg;
 	void initialize();
 	void update();
 	void render();

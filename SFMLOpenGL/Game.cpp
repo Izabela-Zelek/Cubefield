@@ -109,6 +109,7 @@ void Game::run()
 			if (menu.processInput(window, event) == 1)
 			{
 				currentState = GameState::Game;
+				m_song.setVolume(13);
 			}
 			else if (menu.processInput(window, event) == 2)
 			{
@@ -324,6 +325,14 @@ void Game::initialize()
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
 
+	if (!m_bgTexture.loadFromFile("./Assets/Textures/racetrack.png"))
+	{
+		std::cout << "Problem with bg texture file" << std::endl;
+	}
+
+	m_bg.setTexture(m_bgTexture);
+	m_bg.setPosition(0, 0);
+
 	// Load Font
 	font.loadFromFile(".//Assets//Fonts//BBrick.ttf");
 
@@ -332,10 +341,25 @@ void Game::initialize()
 	text.setPosition(30.f, 30.f);
 
 	menu.initialise(font);
+	initSound();
 }
 
 void Game::update()
 {
+	if (m_playSong)
+	{
+		if (sf::Sound::Playing != m_song.getStatus())
+		{
+			m_song.play();
+		}
+	}
+	else
+	{
+		if (sf::Sound::Playing == m_song.getStatus())
+		{
+			m_song.stop();
+		}
+	}
 	switch (currentState)
 	{
 	case GameState::Menu:
@@ -376,6 +400,10 @@ void Game::update()
 			{
 				extraScore = true;
 				moving = true;
+				if (sf::Sound::Playing != m_jump.getStatus()) 
+				{
+					m_jump.play();
+				}
 			}
 		}
 
@@ -428,6 +456,7 @@ void Game::render()
 		// Save current OpenGL render states
 		// https://www.sfml-dev.org/documentation/2.0/classsf_1_1RenderTarget.php#a8d1998464ccc54e789aaf990242b47f7
 		window.pushGLStates();
+		window.draw(m_bg);
 		score++;
 		hud = "Score:" + string(toString(score));
 
@@ -617,6 +646,10 @@ void Game::checkCollision()
 					score = 0;
 					isAlive = true;
 					goalMoving = 0;
+					if (sf::Sound::Playing != m_hit.getStatus())
+					{
+						m_hit.play();
+					}
 				}
 				else
 				{
@@ -634,7 +667,46 @@ void Game::checkCollision()
 	{
 		if (game_object[2]->getPosition().z + goalMoving - 1 >= game_object[1]->getPosition().z)
 		{
+			m_playSong = false;
+			if (sf::Sound::Playing != m_win.getStatus())
+			{
+				m_win.play();
+			}
 			currentState = GameState::EndScreen;
 		}
 	}
+}
+
+void Game::initSound()
+{
+	if (!m_jumpBuffer.loadFromFile("./Assets/Sound/jump.wav"))
+	{
+		std::cout << "Problem with jump sound file" << std::endl;
+	}
+
+	m_jump.setBuffer(m_jumpBuffer);
+	m_jump.setVolume(13);
+
+	if (!m_hitBuffer.loadFromFile("./Assets/Sound/hit.wav"))
+	{
+		std::cout << "Problem with hit sound file" << std::endl;
+	}
+
+	m_hit.setBuffer(m_hitBuffer);
+	m_hit.setVolume(13);
+	m_hit.setPitch(0.7);
+
+	if (!m_songBuffer.loadFromFile("./Assets/Sound/menuSong.wav"))
+	{
+		std::cout << "Problem with menu song file" << std::endl;
+	}
+
+	m_song.setBuffer(m_songBuffer);
+
+	if (!m_winBuffer.loadFromFile("./Assets/Sound/gameWin.wav"))
+	{
+		std::cout << "Problem with win song file" << std::endl;
+	}
+
+	m_win.setBuffer(m_winBuffer);
 }

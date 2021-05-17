@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML\Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include "Player.h"
 
 class MainMenu
@@ -20,7 +21,10 @@ class MainMenu
 	sf::Vector2f m_pushedDownPos[MAX_BUTTON];
 	sf::String m_menuTexts[MAX_BUTTON] = { "Play","Exit" };
 	sf::Vector2f m_buttonOffset{ 200,200 };
-
+	sf::SoundBuffer m_buttonBuffer;
+	sf::Sound m_button;
+	sf::Texture m_bgTexture;
+	sf::Sprite m_bg;
 	//spacing between the buttons
 	float m_buttonSpacing{ 250.0f };
 	
